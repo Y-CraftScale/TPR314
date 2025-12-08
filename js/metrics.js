@@ -94,49 +94,60 @@
     if(nav) state.nav = nav;
   }
 
-  // UI panel
-  const panel = document.createElement('div');
-  panel.setAttribute('id', 'perf-panel');
-  Object.assign(panel.style, {
-    position:'fixed', right:'16px', bottom:'16px', zIndex:9999,
-    width:'320px', maxWidth:'90vw', fontFamily:'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial',
-    background:'rgba(10,12,28,.9)', color:'#E8ECF1', border:'1px solid rgba(255,255,255,.12)',
-    borderRadius:'12px', boxShadow:'0 10px 40px rgba(0,0,0,.5)',
-    backdropFilter:'blur(6px) saturate(120%)', padding:'12px 14px'
-  });
-  panel.innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
-      <strong style="letter-spacing:.2px">Évaluation perfs</strong>
-      <div>
-        <button id="perf-refresh" style="background:#7C5CFF;color:white;border:0;border-radius:8px;padding:6px 10px;cursor:pointer">Mesurer</button>
-        <button id="perf-close" style="background:transparent;color:#c9d1d9;border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:6px 8px;margin-left:6px;cursor:pointer">×</button>
+  // UI panel - chargé de manière asynchrone pour ne pas bloquer
+  let panel = null;
+  function createPanel(){
+    if(panel) return;
+    panel = document.createElement('div');
+    panel.setAttribute('id', 'perf-panel');
+    Object.assign(panel.style, {
+      position:'fixed', right:'16px', bottom:'16px', zIndex:9999,
+      width:'320px', maxWidth:'90vw', fontFamily:'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial',
+      background:'rgba(10,12,28,.9)', color:'#E8ECF1', border:'1px solid rgba(255,255,255,.12)',
+      borderRadius:'12px', boxShadow:'0 10px 40px rgba(0,0,0,.5)',
+      backdropFilter:'blur(6px) saturate(120%)', padding:'12px 14px'
+    });
+    panel.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
+        <strong style="letter-spacing:.2px">Évaluation perfs</strong>
+        <div>
+          <button id="perf-refresh" style="background:#7C5CFF;color:white;border:0;border-radius:8px;padding:6px 10px;cursor:pointer">Mesurer</button>
+          <button id="perf-close" style="background:transparent;color:#c9d1d9;border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:6px 8px;margin-left:6px;cursor:pointer">×</button>
+        </div>
       </div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">
-      <div><div style="opacity:.8">FCP</div><div id="m-fcp" style="font-weight:600">-</div></div>
-      <div><div style="opacity:.8">LCP</div><div id="m-lcp" style="font-weight:600">-</div></div>
-      <div><div style="opacity:.8">CLS</div><div id="m-cls" style="font-weight:600">-</div></div>
-      <div><div style="opacity:.8">TBT (≈)</div><div id="m-tbt" style="font-weight:600">-</div></div>
-      <div><div style="opacity:.8">Requêtes</div><div id="m-req" style="font-weight:600">-</div></div>
-      <div><div style="opacity:.8">Poids total</div><div id="m-bytes" style="font-weight:600">-</div></div>
-    </div>
-    <div style="margin-top:8px;font-size:12px;opacity:.8">
-      <div id="m-note">Cliquez sur <em>Mesurer</em> après vos modifications.</div>
-    </div>
-  `;
-  document.addEventListener('DOMContentLoaded', ()=>{ document.body.appendChild(panel); });
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">
+        <div><div style="opacity:.8">FCP</div><div id="m-fcp" style="font-weight:600">-</div></div>
+        <div><div style="opacity:.8">LCP</div><div id="m-lcp" style="font-weight:600">-</div></div>
+        <div><div style="opacity:.8">CLS</div><div id="m-cls" style="font-weight:600">-</div></div>
+        <div><div style="opacity:.8">TBT (≈)</div><div id="m-tbt" style="font-weight:600">-</div></div>
+        <div><div style="opacity:.8">Requêtes</div><div id="m-req" style="font-weight:600">-</div></div>
+        <div><div style="opacity:.8">Poids total</div><div id="m-bytes" style="font-weight:600">-</div></div>
+      </div>
+      <div style="margin-top:8px;font-size:12px;opacity:.8">
+        <div id="m-note">Cliquez sur <em>Mesurer</em> après vos modifications.</div>
+      </div>
+    `;
+    document.body.appendChild(panel);
+  }
+  // Charger le panel après le chargement initial pour ne pas bloquer
+  if('requestIdleCallback' in window){
+    requestIdleCallback(createPanel, {timeout:2000});
+  } else {
+    setTimeout(createPanel, 100);
+  }
 
   function update(){
     collectResources();
     collectNavigation();
 
-    const $ = id => panel.querySelector(id);
-    $('#m-fcp').textContent = fmtMs(state.fcp);
-    $('#m-lcp').textContent = fmtMs(state.lcp);
-    $('#m-cls').textContent = state.cls ? state.cls.toFixed(3) : '-';
-    $('#m-tbt').textContent = state.totalBlockingTime ? fmtMs(state.totalBlockingTime) : '-';
-    $('#m-req').textContent = String(state.totalRequests||'-');
-    $('#m-bytes').textContent = state.totalBytes ? fmtKB(state.totalBytes) : '-';
+    if(!panel) createPanel();
+    const $ = id => panel && panel.querySelector(id);
+    if($('#m-fcp')) $('#m-fcp').textContent = fmtMs(state.fcp);
+    if($('#m-lcp')) $('#m-lcp').textContent = fmtMs(state.lcp);
+    if($('#m-cls')) $('#m-cls').textContent = state.cls ? state.cls.toFixed(3) : '-';
+    if($('#m-tbt')) $('#m-tbt').textContent = state.totalBlockingTime ? fmtMs(state.totalBlockingTime) : '-';
+    if($('#m-req')) $('#m-req').textContent = String(state.totalRequests||'-');
+    if($('#m-bytes')) $('#m-bytes').textContent = state.totalBytes ? fmtKB(state.totalBytes) : '-';
 
     // Expose pour comparaison avant/après
     window.__metrics = {
@@ -154,8 +165,9 @@
       // Forcer une collecte complète (post-load)
       update();
     }
-    if(e.target && e.target.id==='perf-close'){
+    if(e.target && e.target.id==='perf-close' && panel){
       panel.remove();
+      panel = null;
     }
   });
 
