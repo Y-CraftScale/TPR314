@@ -6,9 +6,11 @@
     <title>Site vitrine</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preload" href="img/img1.jpg" as="image" fetchpriority="high" />
     <link rel="preload" href="css/styles.css" as="style" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=optional" />
     <link rel="stylesheet" href="css/styles.css" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=optional" media="print" onload="this.media='all'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=optional" /></noscript>
     <script src="js/script.js" defer></script>
   </head>
   <body>
@@ -38,7 +40,7 @@
         <h2>Galerie</h2>
         <div class="grid">
           <div class="card">
-            <a href="img1.html"><img src="img/img1.jpg" alt="Image 1" loading="lazy" width="400" height="300" /></a>
+            <a href="img1.html"><img src="img/img1.jpg" alt="Image 1" width="400" height="300" fetchpriority="high" /></a>
           </div>
           <div class="card">
             <a href="img2.html"><img src="img/img2.jpg" alt="Image 2" loading="lazy" width="400" height="300" /></a>
